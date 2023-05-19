@@ -91,7 +91,7 @@ module Sequel
             body = []
             ds.all.each do |row|
               print '.'
-              body << { update: import_object(index_name, row) }
+              body << { index: import_object(index_name, row) }
               body << row.as_indexed_json
             end
             puts '/'
