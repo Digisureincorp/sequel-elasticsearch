@@ -104,7 +104,7 @@ describe Sequel::Plugins::Elasticsearch do
         stub_request(:get, %r{http://localhost:9200/documents/_search.*})
           .to_return(status: 500)
         model.plugin :elasticsearch
-        expect { model.es!('test') }.to raise_error Elasticsearch::Transport::Transport::Error
+        expect { model.es!('test') }.to raise_error Elastic::Transport::Transport::Error
       end
     end
 
@@ -137,7 +137,7 @@ describe Sequel::Plugins::Elasticsearch do
         # Getting Faraday::ConnectionFailed ??
         expect do
           model.scroll!('somescrollid', '1m')
-        end.to raise_error Elasticsearch::Transport::Transport::Error
+        end.to raise_error Elastic::Transport::Transport::Error
       end
     end
 
@@ -170,7 +170,7 @@ describe Sequel::Plugins::Elasticsearch do
 
     describe '#es_client' do
       it 'returns an Elasticsearch Transport Client' do
-        expect(simple_doc.new.send(:es_client)).to be_a Elasticsearch::Transport::Client
+        expect(simple_doc.new.send(:es_client)).to be_a Elastic::Transport::Client
       end
     end
 

@@ -66,8 +66,8 @@ module Sequel
         # Wrapper method in which error handling is done for Elasticsearch calls.
         def call_es
           yield
-        rescue ::Elasticsearch::Transport::Transport::Errors::NotFound,
-               ::Elasticsearch::Transport::Transport::Error,
+        rescue ::Elastic::Transport::Transport::Errors::NotFound,
+               ::Elastic::Transport::Transport::Error,
                Faraday::ConnectionFailed => e
           db.loggers.first.warn e if db.loggers.count.positive?
           nil
@@ -132,7 +132,7 @@ module Sequel
         # Find the last created index that matches the specified index name.
         def last_index
           es_client.indices.get_alias(name: elasticsearch_index)&.keys&.sort&.first
-        rescue ::Elasticsearch::Transport::Transport::Errors::NotFound
+        rescue ::Elastic::Transport::Transport::Errors::NotFound
           nil
         end
 
