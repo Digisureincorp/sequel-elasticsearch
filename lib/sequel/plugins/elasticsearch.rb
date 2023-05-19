@@ -92,6 +92,7 @@ module Sequel
             ds.all.each do |row|
               print '.'
               body << { update: import_object(index_name, row) }
+              body << row.as_indexed_json
             end
             puts '/'
             es_client.bulk body: body
@@ -102,8 +103,7 @@ module Sequel
         def import_object(idx, row)
           {
             _index: idx,
-            _id: row.document_id,
-            data: { doc: row.as_indexed_json, doc_as_upsert: true }
+            _id: row.document_id
           }
         end
 
