@@ -48,30 +48,6 @@ describe Sequel::Plugins::Elasticsearch do
       expect(WebMock).to have_requested(:put, "http://localhost:9200/customIndex/_doc/#{doc.id}")
     end
 
-    it 'only uses type if given' do
-      model.plugin :elasticsearch
-      expect(model.send(:elasticsearch_type)).to be_nil
-    end
-
-    it 'allows you to specify the type' do
-      model.plugin :elasticsearch, type: :customType
-      expect(model.send(:elasticsearch_type)).to eq :customType
-    end
-
-    it 'uses the specified type' do
-      model.plugin :elasticsearch, type: :customType
-      WebMock.allow_net_connect!
-      doc = model.new.save
-      expect(WebMock).to have_requested(:put, "http://localhost:9200/#{model.table_name}/customType/#{doc.id}")
-    end
-
-    it 'uses the default type' do
-      model.plugin :elasticsearch
-      WebMock.allow_net_connect!
-      doc = model.new(content: Time.now).save
-      expect(WebMock).to have_requested(:put, "http://localhost:9200/#{model.table_name}/_doc/#{doc.id}")
-    end
-
     it 'allows you to pass down Elasticsearch client options' do
       model.plugin :elasticsearch, elasticsearch: { log: true }
       expect(model.new.es_client.transport.options).to include log: true
@@ -158,7 +134,10 @@ describe Sequel::Plugins::Elasticsearch do
       it 'does not handle exceptions' do
         stub_request(:get, 'http://localhost:9200/_search/scroll?scroll=1m&scroll_id=somescrollid')
           .to_return(status: 500)
-        expect { model.scroll!('somescrollid', '1m') }.to raise_error Elasticsearch::Transport::Transport::Error # Getting Faraday::ConnectionFailed ??
+        # Getting Faraday::ConnectionFailed ??
+        expect do
+          model.scroll!('somescrollid', '1m')
+        end.to raise_error Elasticsearch::Transport::Transport::Error
       end
     end
 

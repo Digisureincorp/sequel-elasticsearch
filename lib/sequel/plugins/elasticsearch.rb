@@ -25,7 +25,6 @@ module Sequel
       def self.configure(model, opts = OPTS)
         model.elasticsearch_opts = opts[:elasticsearch] || {}
         model.elasticsearch_index = (opts[:index] || model.table_name.to_s.downcase).to_sym
-        model.elasticsearch_type = opts[:type]&.to_sym
         model
       end
 
@@ -35,8 +34,6 @@ module Sequel
         attr_accessor :elasticsearch_opts
         # The Elasticsearch index to which the documents will be written.
         attr_accessor :elasticsearch_index
-        # The Elasticsearch type to which the documents will be written.
-        attr_accessor :elasticsearch_type
 
         # Return the Elasticsearch client used to communicate with the cluster.
         def es_client
@@ -46,8 +43,7 @@ module Sequel
         # Execute a search on the Model's Elasticsearch index without catching Errors.
         def es!(query = '', opts = {})
           opts = {
-            index: elasticsearch_index,
-            type: elasticsearch_type
+            index: elasticsearch_index
           }.merge(opts)
           query.is_a?(String) ? opts[:q] = query : opts[:body] = query
           Result.new es_client.search(opts), self
@@ -104,13 +100,11 @@ module Sequel
         end
 
         def import_object(idx, row)
-          val = {
+          {
             _index: idx,
             _id: row.document_id,
             data: { doc: row.as_indexed_json, doc_as_upsert: true }
           }
-          val[:_type] = elasticsearch_type if elasticsearch_type
-          val
         end
 
         # Creates a new index in Elasticsearch from the specified dataset, as
@@ -156,10 +150,6 @@ module Sequel
       module InstanceMethods
         def elasticsearch_index
           self.class.elasticsearch_index
-        end
-
-        def elasticsearch_type
-          self.class.elasticsearch_type
         end
 
         # Sequel::Model after_create hook to add the new record to the Elasticsearch index.
@@ -218,11 +208,10 @@ module Sequel
           es_client.delete document_path(opts)
         end
 
-        # Determine the complete path to a document (/index/type/id) in the Elasticsearch cluster.
+        # Determine the complete path to a document (/index/_doc/id) in the Elasticsearch cluster.
         def document_path(opts = {})
           {
             index: opts.delete(:index) || elasticsearch_index,
-            type: opts.delete(:type) || elasticsearch_type,
             id: opts.delete(:id) || document_id
           }
         end
